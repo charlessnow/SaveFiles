@@ -29,15 +29,18 @@
 - (instancetype)init{
     if (self = [super init]) {
         self.temPath =  [FilesTool getPathInDocumentsDirBy:@"SaveFile" createIfNotExist:YES];
-
         self.timeOut = 2.0;
         self.state = [[IdleState alloc]initWithSaveDataContext:self data:nil];
     } 
     return self;
 }
 
-- (void)saveDataWithData:(NSData *)data{
+- (void)saveDataWithData:(NSData *)data completion:(EventHandler)completion{
     [self.state saveDataWithData:data];
+}
+
+- (void)cancelSaveFiles{
+    [self.state abort];
 }
 
 - (void)dealloc{

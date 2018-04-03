@@ -8,6 +8,7 @@
 
 #import "PendingState.h"
 #import "WorkingState.h"
+#import "IdleState.h"
 
 @implementation PendingState
 
@@ -28,6 +29,13 @@
 
 - (void)timerFired:(NSTimer *)timer{
     [self setState:NSStringFromClass([WorkingState class]) data:self.data];
+}
+
+- (void)abort{
+    if (self.timer)[self.timer invalidate];
+    self.timer = nil;
+    self.data = nil;
+    [self setState:NSStringFromClass([IdleState class]) data:nil];
 }
 
 

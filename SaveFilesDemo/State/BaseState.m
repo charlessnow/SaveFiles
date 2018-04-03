@@ -21,8 +21,7 @@
 
 
 - (void)setState:(NSString *)state data:(NSData *)data{
-    [self abort];
-    id s = [[NSClassFromString(state) alloc] initWithSaveDataContext:self.ctx data:data];
+    BaseState *s = [[NSClassFromString(state) alloc] initWithSaveDataContext:self.ctx data:data];
     NSLog(@"%@, %@",state, s);
 }
 

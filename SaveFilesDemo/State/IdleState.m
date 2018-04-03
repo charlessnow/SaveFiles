@@ -23,4 +23,8 @@
     [self setState:NSStringFromClass([PendingState class]) data:data];
 }
 
+- (void)abort{
+    
+}
+
 @end

@@ -9,6 +9,15 @@
 #import "WorkingState.h"
 #import "PendingState.h"
 #import "IdleState.h"
+#import "SaveDataEventHandler.h"
+
+@interface WorkingState ()
+{
+    BOOL _writing;
+//    NSTimer *_timer;
+    NSDate *_date;
+}
+@end
 
 @implementation WorkingState
 
@@ -16,55 +25,49 @@
     if (self = [super initWithSaveDataContext:ctx data:data]) {
         self.data = data;
         self.ctx = ctx;
-        [self writeDataToFile];
-      
+        [self writeDataToFileWithCompletion:^(NSString *filePath, NSError *error) {
+            if (filePath && !error) {
+                _writing = NO;
+            }
+        }];
     }
     return self;
 }
 
-
-- (void)writeDataToFile{
+- (void)writeDataToFileWithCompletion:(EventHandler)completion{
+    _writing = YES;
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         NSError *error;
         NSString *temPath = [self.ctx.temPath stringByAppendingPathComponent:@"tmpFiles.txt"];
         BOOL isTureWrite = [self.data writeToFile:temPath options:NSDataWritingAtomic error:&error];
         if (isTureWrite) {
             NSLog(@"success");
-            __weak typeof(self) weakself = self;
-            [self renameFileWithName:@"realFile" tempPath:temPath completion:^(BOOL success, NSString *filePath,NSError *fileError) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (success && filePath) {
-                        [weakself actionForSuccess];
-                    }else{
-                        [weakself actionForError:fileError];
-                    }
-                });
-            }];
+            NSError *fileError;
+            NSFileManager *fileManager = [NSFileManager defaultManager];
+            NSString *filePath = temPath;
+            NSString *moveToPath = [self.ctx.temPath stringByAppendingPathComponent:@"rename.txt"];
+            if ([fileManager fileExistsAtPath:moveToPath]) {
+                [fileManager removeItemAtPath:moveToPath error:&fileError];
+                if (fileError)[self actionForError:fileError];
+            }
+            BOOL isSuccess = [fileManager moveItemAtPath:filePath toPath:moveToPath error:&fileError];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (isSuccess) {
+                    NSLog(@"rename success");
+                    completion(filePath,nil);
+                    [self actionForSuccessWithFilePath:filePath];
+                }else{
+                    completion(nil,fileError);
+                    NSLog(@"rename fail,%@",fileError);
+                    [self actionForError:fileError];
+                }
+            });
         }else{
             NSLog(@"fail");
+            completion(nil,error);
             [self actionForError:error];
         }
     });
-}
-
-- (void)renameFileWithName:(NSString *)name tempPath:(NSString *)path completion:(void(^)(BOOL success,NSString *filePath,NSError *error))completion{
-    //通过移动该文件对文件重命名
-    NSError *fileError;
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *filePath = path;
-    NSString *moveToPath = [self.ctx.temPath stringByAppendingPathComponent:@"rename.txt"];
-    if ([fileManager fileExistsAtPath:moveToPath]) {
-        [fileManager removeItemAtPath:moveToPath error:&fileError];
-        if (fileError)completion(false,nil,fileError);
-    }
-    BOOL isSuccess = [fileManager moveItemAtPath:filePath toPath:moveToPath error:&fileError];
-    if (isSuccess) {
-        NSLog(@"rename success");
-        completion(true,moveToPath,nil);
-    }else{
-        NSLog(@"rename fail,%@",fileError);
-        completion(false,nil,fileError);
-    }
 }
 
 - (void)actionForError:(NSError *)error{
@@ -75,7 +78,7 @@
     }
 }
 
-- (void)actionForSuccess{
+- (void)actionForSuccessWithFilePath:(NSString *)filePath{
     if (self.nextData) {
         [self setState:NSStringFromClass([PendingState class]) data:self.nextData];
     }else{
@@ -86,5 +89,26 @@
 - (void)saveDataWithData:(NSData *)data{
     self.nextData = data;
 }
-@end
 
+- (void)abort{
+//    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+//    dispatch_semaphore_wait(sema, 90.0f);
+    if (!_date) {
+        _date = [NSDate date];
+    }
+    if (_writing) {
+        NSDate *date = [NSDate date];
+        double intervalTime = [date timeIntervalSinceReferenceDate] - [_date timeIntervalSinceReferenceDate];
+        if (intervalTime<=60.0) {
+            [self performSelector:@selector(abort) withObject:nil afterDelay:2.0f];
+            return;
+        }
+    }
+    if (self.nextData) {
+        self.nextData = nil;
+    }
+    _date = nil;
+    [self setState:NSStringFromClass([IdleState class]) data:nil];
+}
+
+@end

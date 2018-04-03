@@ -17,8 +17,12 @@
 @property (nonatomic) NSString *fileName;
 @property (nonatomic) NSTimeInterval timeOut;
 
-- (void)saveDataWithData:(NSData *)data;
+- (void)saveDataWithData:(NSData *)data completion:(EventHandler)completion;
 
 + (instancetype)shared;
+
+
+- (void)cancelSaveFiles;
+
 
 @end
