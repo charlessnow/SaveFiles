@@ -14,7 +14,7 @@
 @interface WorkingState ()
 {
     BOOL _writing;
-//    NSTimer *_timer;
+    //    NSTimer *_timer;
     NSDate *_date;
 }
 @end
@@ -91,8 +91,8 @@
 }
 
 - (void)abort{
-//    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-//    dispatch_semaphore_wait(sema, 90.0f);
+    //    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+    //    dispatch_semaphore_wait(sema, 90.0f);
     if (!_date) {
         _date = [NSDate date];
     }
@@ -112,3 +112,43 @@
 }
 
 @end
+
+
+@interface WorkingState2 ()
+
+
+
+@end
+
+@implementation WorkingState2
+
+- (instancetype)initWithSaveDataContext:(SaveDataContext *)ctx data:(NSData *)data{
+    if (self = [super initWithSaveDataContext:ctx data:data]) {
+        self.data = data;
+        self.ctx = ctx;
+    }
+    return self;
+}
+
+- (void)saveDataWithData:(NSData *)data{
+
+}
+
+-(void)abort{
+    
+}
+
+@end
+
+@interface AllWorkingState ()
+
+@end
+
+@implementation AllWorkingState
+
+-(void)abort{
+    
+}
+@end
+
+

@@ -20,5 +20,5 @@
 - (instancetype)initWithSaveDataContext:(SaveDataContext *)ctx data:(NSData *)data;
 - (void)setState:(NSString *)state data:(NSData *)data;
 - (void)abort;
-- (EventHandler)completion;
+//- (EventHandler)completion;
 @end

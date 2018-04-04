@@ -11,3 +11,12 @@
 @interface WorkingState : BaseState
 @property (nonatomic)NSData *nextData;
 @end
+
+@interface WorkingState2: BaseState
+
+@end
+
+@interface AllWorkingState: BaseState
+@property (nonatomic) WorkingState *workingState;
+@property (nonatomic) WorkingState2 *workingState2;
+@end
